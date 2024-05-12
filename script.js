@@ -29,10 +29,12 @@ function getCountryByIP() {
         .then(response => response.json())
         .then(data => {
             const country = data.country;
-            // TODO inject country to form and call getCountryCode(country) function
+            // Inject country to form
+            countryInput.value = country;
+            getCountryCode(country); // This will fetch the country code
         })
         .catch(error => {
-            console.error('Błąd pobierania danych z serwera GeoJS:', error);
+            console.error('Error fetching data from GeoJS:', error);
         });
 }
 
@@ -42,23 +44,39 @@ function getCountryCode(countryName) {
     fetch(apiUrl)
     .then(response => {
         if (!response.ok) {
-            throw new Error('Błąd pobierania danych');
+            throw new Error('Error fetching data');
         }
         return response.json();
     })
     .then(data => {        
-        const countryCode = data[0].idd.root + data[0].idd.suffixes.join("")
-        // TODO inject countryCode to form
+        const countryCode = data[0].idd.root + data[0].idd.suffixes[0]; // Assuming suffixes array is not empty
+        const countryCodeSelect = document.getElementById('countryCode');
+        // Check if the country code already exists in the options, if not add it
+        if (!Array.from(countryCodeSelect.options).some(option => option.value === countryCode)) {
+            const option = new Option(`${countryCode} (${countryName})`, countryCode, false, true);
+            countryCodeSelect.add(option);
+        } else {
+            countryCodeSelect.value = countryCode;
+        }
+        countryCodeSelect.value = countryCode; // Select the country code in the form
     })
     .catch(error => {
-        console.error('Wystąpił błąd:', error);
+        console.error('Error:', error);
     });
 }
 
-
-(() => {
-    // nasłuchiwania na zdarzenie kliknięcia myszką
+document.addEventListener('DOMContentLoaded', function() {
+    getCountryByIP(); // Fetch country and code on page load
     document.addEventListener('click', handleClick);
-
     fetchAndFillCountries();
-})()
+});
+
+
+function validateForm() {
+    let email = document.getElementById('emailAddress').value;
+    if (!email.match(/\S+@\S+\.\S+/)) {
+        alert('Proszę wprowadzić prawidłowy adres email.');
+        return false;
+    }
+    return true;
+}
